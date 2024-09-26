@@ -4,6 +4,7 @@ import json
 import threading
 import time
 import logging
+from w1thermsensor import W1ThermSensor
 
 # Налаштування логування
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -12,9 +13,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 GPIO.setmode(GPIO.BCM)
 
 # Визначення пінів (замініть на ваші актуальні пін-коди)
-PIN_HIGH = 17  # Приклад піну для HIGH
-PIN_LOW = 27   # Приклад піну для LOW
-NASOS_OTOP = 22  # Пін для насоса
+PIN_HIGH = 17       # Пін для клапана HIGH
+PIN_LOW = 27        # Пін для клапана LOW
+NASOS_OTOP = 22     # Пін для насоса
 
 GPIO.setup(PIN_HIGH, GPIO.OUT)
 GPIO.setup(PIN_LOW, GPIO.OUT)
@@ -42,7 +43,8 @@ def load_eeprom():
             'kof_p': 1.0,
             'kof_i': 1.0,
             'kof_d': 1.0,
-            'dead_zone': 0.5
+            'dead_zone': 0.5,
+            'T_bat': 0.0  # Поточна температура (можливо, потрібно оновити)
         }
 
 def save_eeprom(eeprom):
@@ -254,14 +256,15 @@ class MQTTClient:
         self.pid = pid_controller
 
         # MQTT параметри
-        self.mqtt_server = "greenhouse.net.ua"
-        self.mqtt_port = 1883
-        self.mqtt_user = "mqtt_boyler"
-        self.mqtt_pass = "qwerty"
+        self.MQTT_BROKER = "greenhouse.net.ua"
+        self.MQTT_PORT = 1883
+        self.MQTT_USER = "mqtt_boyler"
+        self.MQTT_PASSWORD = "qwerty"
+        self.CLIENT_ID = f"raspi-{os.uname().nodename}"
 
         # Ініціалізація MQTT клієнта
-        self.client = mqtt.Client()
-        self.client.username_pw_set(self.mqtt_user, self.mqtt_pass)
+        self.client = mqtt.Client(self.CLIENT_ID)
+        self.client.username_pw_set(self.MQTT_USER, self.MQTT_PASSWORD)
 
         # Прив'язка колбеків
         self.client.on_connect = self.on_connect
@@ -479,7 +482,7 @@ class MQTTClient:
 
     def start(self):
         try:
-            self.client.connect(self.mqtt_server, self.mqtt_port, 60)
+            self.client.connect(self.MQTT_BROKER, self.MQTT_PORT, 60)
         except Exception as e:
             logging.error(f"Не вдалося підключитися до MQTT брокера: {e}")
             return
@@ -491,11 +494,37 @@ class MQTTClient:
         self.client.loop_stop()
         self.client.disconnect()
 
+def read_temperature():
+    base_dir = '/sys/bus/w1/devices/'
+    device_folder = [f for f in os.listdir(base_dir) if f.startswith('28')][0]
+    device_file = f'{base_dir}{device_folder}/w1_slave'
+
+    try:
+        with open(device_file, 'r') as f:
+            lines = f.readlines()
+
+        # Перевіряємо, чи є "YES" у першому рядку, що свідчить про коректне зчитування
+        if lines[0].strip()[-3:] == 'YES':
+            # Зчитуємо температуру з другого рядка
+            equals_pos = lines[1].find('t=')
+            if equals_pos != -1:
+                temp_string = lines[1][equals_pos + 2:]
+                temperature = float(temp_string) / 1000.0
+                return temperature
+    except Exception as e:
+        logging.error(f"Помилка зчитування температури: {e}")
+    return None
+
+def moving_average_filter(new_value, smoothed_value):
+    return 0.9 * smoothed_value + 0.1 * new_value
+
 def get_current_temperature():
-    # Функція для отримання поточної температури
-    # Замість цього потрібно реалізувати зчитування з датчика
-    # Наприклад, зчитування з DS18B20 або іншого сенсора
-    return 25.0  # Приклад значення
+    temperature = read_temperature()
+    if temperature is not None:
+        logging.info(f"Поточна температура: {temperature}°C")
+    else:
+        logging.warning("Не вдалося зчитати температуру.")
+    return temperature if temperature is not None else 0.0  # Повертаємо 0.0, якщо зчитування не вдалося
 
 def main():
     # Завантаження стану з EEPROM
