@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 
 # Налаштування MQTT
 MQTT_BROKER = "greenhouse.net.ua"
-MQTT_TOPIC = "aparts/pi4/temp_out"
+MQTT_TOPIC = "aparts/temp_out"
 MQTT_USER = "mqtt"
 MQTT_PASSWORD = "qwerty"
 CLIENT_ID = f"raspi-{os.uname().nodename}"
