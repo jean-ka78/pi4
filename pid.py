@@ -1,11 +1,16 @@
+from venv import logger
+from sensor import TemperatureSensor
 import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 import json
 import threading
 import time
 import logging
-from w1thermsensor import W1ThermSensor
-
+import os
+# from w1thermsensor import W1ThermSensor
+# from ds18b20 import TemperatureSensor
+from sensor import TemperatureSensor
+# import sensor 
 # Налаштування логування
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -218,6 +223,7 @@ class PIDController(threading.Thread):
             self.TIMER_PID_UP += 0.1
             self.TIMER_PID_UP = min(self.TIMER_PID_UP, self.VALVE)
             GPIO.output(PIN_HIGH, GPIO.LOW)
+            logging.info(f"UP")
         else:
             GPIO.output(PIN_HIGH, GPIO.HIGH)
 
@@ -228,6 +234,7 @@ class PIDController(threading.Thread):
             self.TIMER_PID_DOWN += 0.1
             self.TIMER_PID_DOWN = min(self.TIMER_PID_DOWN, self.VALVE)
             GPIO.output(PIN_LOW, GPIO.LOW)
+            logging.info(f"DOWN")
         else:
             GPIO.output(PIN_LOW, GPIO.HIGH)
 
@@ -494,7 +501,7 @@ class MQTTClient:
         self.client.loop_stop()
         self.client.disconnect()
 
-def read_temperature():
+def read_temperatur():
     base_dir = '/sys/bus/w1/devices/'
     device_folder = [f for f in os.listdir(base_dir) if f.startswith('28')][0]
     device_file = f'{base_dir}{device_folder}/w1_slave'
@@ -525,7 +532,31 @@ def get_current_temperature():
     else:
         logging.warning("Не вдалося зчитати температуру.")
     return temperature if temperature is not None else 0.0  # Повертаємо 0.0, якщо зчитування не вдалося
+def read_temperature():
+    sensor = TemperatureSensor()
+    try: 
+        # Ініціалізація першим виміряним значенням температури
+        initial_temperature = sensor.read_temperature()
+        if initial_temperature is None:
+            logger.error("No sensors found.")
+            return
 
+        smoothed_temperature = initial_temperature
+
+        while True:
+            raw_temperature = sensor.read_temperature()
+
+            if raw_temperature is not None:
+                smoothed_temperature = moving_average_filter(raw_temperature, smoothed_temperature)
+                # logger.info(f"Raw Temperature: {raw_temperature}")
+                # logger.info(f"Smoothed Temperature: {round(smoothed_temperature, 2)}")
+                # mqtt_client.publish(str(round(smoothed_temperature, 2)))
+
+            time.sleep(1)
+    except Exception as e:
+        logging.error(f"Помилка зчитування температури: {e}")
+    return None
+    
 def main():
     # Завантаження стану з EEPROM
     eeprom = load_eeprom()

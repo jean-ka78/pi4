@@ -1,0 +1,1 @@
+{"nasos_on": false, "heat_otop": true, "valve_mode": false, "temp_min_out": 10.0, "temp_max_heat": 60.0, "temp_max_out": 80.0, "temp_off_otop": 55.0, "per_on": 10.0, "per_off": 100.0, "kof_p": 1.0, "kof_i": 1.0, "kof_d": 1.0, "dead_zone": 0.5, "T_bat": 0.0, "boy_state": true, "summer": false, "temp_out": 21.59}
