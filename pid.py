@@ -148,7 +148,8 @@ class PIDController(threading.Thread):
         self._gtv2 = self._trgrt2
 
         # Розрахунок цільової температури
-        self.T_OUT = self.get_temperature()
+        # self.T_OUT = self.get_temperature()
+        self.T_OUT = self.eeprom['temp_out']
         self.T_X1 = self.eeprom['temp_min_out']
         self.T_Y1 = self.eeprom['temp_max_heat']
         self.T_X2 = self.eeprom['temp_max_out']
@@ -250,12 +251,12 @@ class PIDController(threading.Thread):
     def turnNasosOn(self):
         GPIO.output(NASOS_OTOP, GPIO.HIGH)
         self.eeprom['nasos_on'] = True
-        logging.info("Насос увімкнено.")
+        # logging.info("Насос увімкнено.")
 
     def turnNasosOff(self):
         GPIO.output(NASOS_OTOP, GPIO.LOW)
         self.eeprom['nasos_on'] = False
-        logging.info("Насос вимкнено.")
+        # logging.info("Насос вимкнено.")
 
 class MQTTClient:
     def __init__(self, eeprom, pid_controller):
@@ -297,6 +298,7 @@ class MQTTClient:
             "home/set/heat_on/valve/mode": self.handle_valve_mode,
             "home/set/heat_on/hand_up": self.handle_hand_up,
             "home/set/heat_on/hand_down": self.handle_hand_down,
+            "home/heat_on/current-temperature/get": self.handle_t_bat
         }
 
     def on_connect(self, client, userdata, flags, rc):
@@ -486,6 +488,15 @@ class MQTTClient:
             self.pid.HAND_DOWN = False
             logging.info("Ручне опускання вимкнено.")
         save_eeprom(self.eeprom)
+
+    def handle_t_bat(self, message):
+        try:
+            temp_bat = float(message)
+            self.eeprom['T_bat'] = temp_bat
+            logging.info(f"Температура v bat встановлено: {self.eeprom['T_bat']}")
+            save_eeprom(self.eeprom)
+        except ValueError:
+            logging.error(f"Недійсне значення температури на виході: {message}")
 
     def start(self):
         try:
