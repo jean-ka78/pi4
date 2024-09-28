@@ -1,1 +1,19 @@
-{"nasos_on": true, "heat_otop": true, "valve_mode": false, "temp_min_out": -10.0, "temp_max_heat": 60.0, "temp_max_out": 10.0, "temp_off_otop": 55.0, "per_on": 10.0, "per_off": 100.0, "kof_p": 0.1, "kof_i": 1.5, "kof_d": 1.5, "dead_zone": 2.0, "T_bat": 24.9, "boy_state": true, "summer": false, "temp_out": 20.01}
+{
+    "nasos_on": true,
+    "heat_otop": true,
+    "valve_mode": true,
+    "temp_min_out": -10.0,
+    "temp_max_heat": 60.0,
+    "temp_max_out": 10.0,
+    "temp_off_otop": 55.0,
+    "per_on": 10.0,
+    "per_off": 100.0,
+    "kof_p": 0.1,
+    "kof_i": 1.5,
+    "kof_d": 1.5,
+    "dead_zone": 2.0,
+    "T_bat": 24.98,
+    "boy_state": true,
+    "summer": false,
+    "temp_out": 26.02
+}

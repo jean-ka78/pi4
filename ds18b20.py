@@ -190,7 +190,7 @@ if __name__ == "__main__":
     sensor = TemperatureSensor(
         broker="greenhouse.net.ua",
         port=1883,
-        topic="aparts/temp_out",
+        topic="aparts/temp",
         user="mqtt",
         password="qwerty",
         client_id=f"raspi-{os.uname().nodename}",
