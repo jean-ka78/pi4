@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 import time
-import multiprocessing
+import threading
 
 # Налаштування GPIO
 GPIO.setmode(GPIO.BCM)  # Використовуємо нумерацію GPIO (BCM)
@@ -18,15 +18,17 @@ class Flasher:
 
     # Метод для запуску роботи реле
     def flash(self):
-        while True:
-            GPIO.output(self.pin, GPIO.HIGH)  # Увімкнути реле
-            print(f"Реле на піні {self.pin} увімкнено на {self.on_time} секунд.")
-            time.sleep(self.on_time)  # Затримка увімкненого стану
-            
-            GPIO.output(self.pin, GPIO.LOW)   # Вимкнути реле
-            print(f"Реле на піні {self.pin} вимкнено на {self.off_time} секунд.")
-            time.sleep(self.off_time)  # Затримка вимкненого стану
-
+        try:
+            while True:
+                GPIO.output(self.pin, GPIO.HIGH)  # Увімкнути реле
+                print(f"Реле на піні {self.pin} увімкнено на {self.on_time} секунд.")
+                time.sleep(self.on_time)  # Затримка увімкненого стану
+                
+                GPIO.output(self.pin, GPIO.LOW)   # Вимкнути реле
+                print(f"Реле на піні {self.pin} вимкнено на {self.off_time} секунд.")
+                time.sleep(self.off_time)  # Затримка вимкненого стану
+        except KeyboardInterrupt:
+            GPIO.cleanup()  # Очищення GPIO при завершенні
 
 if __name__ == "__main__":
     # Створюємо об'єкти Flasher для кожного реле
@@ -34,24 +36,22 @@ if __name__ == "__main__":
     relay2 = Flasher(pin=27, on_time=2, off_time=3)  # Реле на GPIO 27
     relay3 = Flasher(pin=22, on_time=3, off_time=4)  # Реле на GPIO 22
 
-    # Створюємо процеси для кожного реле
-    processes = [
-        multiprocessing.Process(target=relay1.flash),
-        multiprocessing.Process(target=relay2.flash),
-        multiprocessing.Process(target=relay3.flash)
+    # Створюємо потоки для кожного реле
+    threads = [
+        threading.Thread(target=relay1.flash),
+        threading.Thread(target=relay2.flash),
+        threading.Thread(target=relay3.flash)
     ]
     
-    # Запускаємо процеси
-    for process in processes:
-        process.start()
+    # Запускаємо потоки
+    for thread in threads:
+        thread.start()
 
     try:
-        # Очікуємо завершення процесів
-        for process in processes:
-            process.join()
+        # Очікуємо завершення потоків
+        for thread in threads:
+            thread.join()
     except KeyboardInterrupt:
-        # Очищуємо GPIO у випадку завершення програми
+        # Завершуємо при натисканні клавіші
         print("Завершення програми...")
-        for process in processes:
-            process.terminate()
         GPIO.cleanup()  # Очищення GPIO після завершення
