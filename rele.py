@@ -1,42 +1,84 @@
+#!/usr/bin/python
 import RPi.GPIO as GPIO
 import time
 
-# Налаштування GPIO
-GPIO.setmode(GPIO.BCM)  # Використовуємо нумерацію GPIO (BCM)
-GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
 
-class Flasher:
-    def __init__(self, pin, on_time, off_time):
-        self.pin = pin
-        self.on_time = on_time
-        self.off_time = off_time
-        
-        # Налаштовуємо пін як вихідний
-        GPIO.setup(self.pin, GPIO.OUT)
-        GPIO.output(self.pin, GPIO.LOW)  # Спочатку вимикаємо реле
+# init list with pin numbers
 
-    # Метод для запуску роботи реле
-    def flash(self):
-        while True:
-            GPIO.output(self.pin, GPIO.HIGH)  # Увімкнути реле
-            print(f"Реле на піні {self.pin} увімкнено на {self.on_time} секунд.")
-            time.sleep(self.on_time)  # Затримка увімкненого стану
-            
-            GPIO.output(self.pin, GPIO.LOW)   # Вимкнути реле
-            print(f"Реле на піні {self.pin} вимкнено на {self.off_time} секунд.")
-            time.sleep(self.off_time)  # Затримка вимкненого стану
+pinList = [2, 3, 4, 17, 27, 22, 10, 9, 11, 5, 6, 13, 19, 26, 21, 20]
 
-if __name__ == "__main__":
-    # Створюємо об'єкти Flasher для кожного реле
-    relay1 = Flasher(pin=17, on_time=1, off_time=2)  # Реле на GPIO 17
-    relay2 = Flasher(pin=27, on_time=2, off_time=3)  # Реле на GPIO 27
-    relay3 = Flasher(pin=22, on_time=3, off_time=4)  # Реле на GPIO 22
+# loop through pins and set mode and state to 'low'
 
-    try:
-        while True:
-            relay1.flash()
-            relay2.flash()
-            relay3.flash()
-    except KeyboardInterrupt:
-        print("Завершення програми...")
-        GPIO.cleanup()  # Очищення GPIO після завершення
+for i in pinList:
+    GPIO.setup(i, GPIO.OUT)
+    GPIO.output(i, GPIO.HIGH)
+
+# time to sleep between operations in the main loop
+
+SleepTimeL = 2
+
+# main loop
+
+try:
+  GPIO.output(2, GPIO.LOW)
+  print ("ONE")
+  time.sleep(SleepTimeL);
+  GPIO.output(3, GPIO.LOW)
+  print ("TWO")
+  time.sleep(SleepTimeL);
+  GPIO.output(4, GPIO.LOW)
+  print ("THREE")
+  time.sleep(SleepTimeL);
+  GPIO.output(17, GPIO.LOW)
+  print ("FOUR")
+  time.sleep(SleepTimeL);
+  GPIO.output(27, GPIO.LOW)
+  print ("FIVE")
+  time.sleep(SleepTimeL);
+  GPIO.output(22, GPIO.LOW)
+  print ("SIX")
+  time.sleep(SleepTimeL);
+  GPIO.output(10, GPIO.LOW)
+  print ("SEVEN")
+  time.sleep(SleepTimeL);
+  GPIO.output(9, GPIO.LOW)
+  print ("EIGHT")
+  time.sleep(SleepTimeL);
+  GPIO.output(11, GPIO.LOW)
+  print ("NINE")
+  time.sleep(SleepTimeL);
+  GPIO.output(5, GPIO.LOW)
+  print ("TEN")
+  time.sleep(SleepTimeL);
+  GPIO.output(6, GPIO.LOW)
+  print ("ELEVEN")
+  time.sleep(SleepTimeL);
+  GPIO.output(13, GPIO.LOW)
+  print ("TWELVE")
+  time.sleep(SleepTimeL);
+  GPIO.output(19, GPIO.LOW)
+  print ("THIRTEEN")
+  time.sleep(SleepTimeL);
+  GPIO.output(26, GPIO.LOW)
+  print ("FOURTEEN")
+  time.sleep(SleepTimeL);
+  GPIO.output(21, GPIO.LOW)
+  print ("FIFTEEN")
+  time.sleep(SleepTimeL);
+  GPIO.output(20, GPIO.LOW)
+  print ("SIXTEEN")
+  time.sleep(SleepTimeL);
+  GPIO.cleanup()
+  print ("Good bye!")
+
+# End program cleanly with keyboard
+except KeyboardInterrupt:
+  print ("  Quit")
+
+  # Reset GPIO settings
+  GPIO.cleanup()
+
+
+# find more information on this script at
+# http://youtu.be/oaf_zQcrg7g
