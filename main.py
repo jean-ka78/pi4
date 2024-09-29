@@ -1,15 +1,15 @@
 import time
 import os
 from sensor import TemperatureSensor
-from mqtt_client import MQTTClient
+# from mqtt_client import MQTTClient
 from logger import setup_logger
 
 # Налаштування MQTT
-MQTT_BROKER = "greenhouse.net.ua"
-MQTT_TOPIC = "aparts/temp_out"
-MQTT_USER = "mqtt"
-MQTT_PASSWORD = "qwerty"
-CLIENT_ID = f"raspi-{os.uname().nodename}"
+# MQTT_BROKER = "greenhouse.net.ua"
+# MQTT_TOPIC = "aparts/temp_out"
+# MQTT_USER = "mqtt"
+# MQTT_PASSWORD = "qwerty"
+# CLIENT_ID = f"raspi-{os.uname().nodename}"
 
 # Ініціалізація логера
 logger = setup_logger()
@@ -19,14 +19,16 @@ def moving_average_filter(new_value, smoothed_value):
 
 def main():
     # Створюємо об'єкт сенсору
-    sensor = TemperatureSensor()
+    t_bat = TemperatureSensor('28-0921c00ab497')
+    t_boy = TemperatureSensor('28-0921c00ef1b1')
+    t_kol = TemperatureSensor('28-0921c0107bb4')
 
     # Підключаємося до MQTT
-    mqtt_client = MQTTClient(MQTT_BROKER, MQTT_TOPIC, MQTT_USER, MQTT_PASSWORD, CLIENT_ID)
+    # mqtt_client = MQTTClient(MQTT_BROKER, MQTT_TOPIC, MQTT_USER, MQTT_PASSWORD, CLIENT_ID)
 
     try:
         # Ініціалізація першим виміряним значенням температури
-        initial_temperature = sensor.read_temperature()
+        initial_temperature = _bat.read_temperature()
         if initial_temperature is None:
             logger.error("No sensors found.")
             return
@@ -34,7 +36,7 @@ def main():
         smoothed_temperature = initial_temperature
 
         while True:
-            raw_temperature = sensor.read_temperature()
+            raw_temperature = t_bat.read_temperature()
 
             if raw_temperature is not None:
                 smoothed_temperature = moving_average_filter(raw_temperature, smoothed_temperature)
