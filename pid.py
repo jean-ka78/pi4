@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 GPIO.setmode(GPIO.BCM)
 
 # Визначення пінів (замініть на ваші актуальні пін-коди)
-PIN_HIGH = 17       # Пін для клапана HIGH
-PIN_LOW = 27        # Пін для клапана LOW
-NASOS_OTOP = 22     # Пін для насоса
+PIN_HIGH = 13       # Пін для клапана HIGH
+PIN_LOW = 29        # Пін для клапана LOW
+NASOS_OTOP = 26     # Пін для насоса
 
 GPIO.setup(PIN_HIGH, GPIO.OUT)
 GPIO.setup(PIN_LOW, GPIO.OUT)
