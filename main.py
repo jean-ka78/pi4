@@ -13,22 +13,25 @@ from logger import setup_logger
 
 # Ініціалізація логера
 logger = setup_logger()
+# Створюємо об'єкт сенсору
+t_bat = TemperatureSensor('28-0921c00ab497')
+t_boy = TemperatureSensor('28-0921c00ef1b1')
+t_kol = TemperatureSensor('28-0921c0107bb4')
+
 
 def moving_average_filter(new_value, smoothed_value):
     return 0.9 * smoothed_value + 0.1 * new_value
 
+
 def main():
-    # Створюємо об'єкт сенсору
-    t_bat = TemperatureSensor('28-0921c00ab497')
-    t_boy = TemperatureSensor('28-0921c00ef1b1')
-    t_kol = TemperatureSensor('28-0921c0107bb4')
+    
 
     # Підключаємося до MQTT
     # mqtt_client = MQTTClient(MQTT_BROKER, MQTT_TOPIC, MQTT_USER, MQTT_PASSWORD, CLIENT_ID)
 
     try:
         # Ініціалізація першим виміряним значенням температури
-        initial_temperature = _bat.read_temperature()
+        initial_temperature = t_bat.read_temperature()
         if initial_temperature is None:
             logger.error("No sensors found.")
             return
