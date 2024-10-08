@@ -51,6 +51,10 @@ class GreenhouseController:
             "home/set/heat_on/valve/mode": self.handle_valve_mode,
             "home/set/heat_on/hand_up": self.handle_hand_up,
             "home/set/heat_on/hand_down": self.handle_hand_down,
+            "home/boy_on/current-temperature/get": self.handle_boy_curr_temp,
+            "home/heat_on/current-temperature/get": self.handle_bat_curr_temp,
+            "home/heat_on/current-temperature_koll": self.handle_heat_curr_temp,
+
         }
 
     def handle_boy_mode_set(self, message):
@@ -178,6 +182,30 @@ class GreenhouseController:
             logging.info(f"Температура на виході: {self.T_out}")
         except ValueError:
             logging.error(f"Недійсне значення температури на виході: {message}")
+    
+    def handle_boy_curr_temp(self, message):
+        try:
+            temp_boy = float(message)
+            self.T_boy = temp_boy
+            logging.info(f"Температура бойлера: {self.T_boy}")
+        except ValueError:
+            logging.error(f"Недійсне значення температури бойлера: {message}")
+
+    def handle_bat_curr_temp(self, message):
+        try:
+            temp_bat = float(message)
+            self.T_bat = temp_bat
+            logging.info(f"Температура батарей: {self.T_bat}")
+        except ValueError:
+            logging.error(f"Недійсне значення температури батарей: {message}")
+    
+    def handle_heat_curr_temp(self, message):
+        try:
+            temp_heat = float(message)
+            self.T_heat = temp_heat
+            logging.info(f"Температура коллектора: {self.T_heat}")
+        except ValueError:
+            logging.error(f"Недійсне значення температури коллектора: {message}")
 
     def handle_valve_mode(self, message):
         if message == "on":
