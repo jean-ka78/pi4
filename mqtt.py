@@ -1,13 +1,39 @@
 import paho.mqtt.client as mqtt
 import logging
+import json
 
 # Налаштування логування
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Імітація EEPROM за допомогою JSON файлу
+EEPROM_FILE = 'eeprom.json'
+
+def save_eeprom(eeprom):
+    try:
+        with open(EEPROM_FILE, 'w') as f:
+            json.dump(eeprom, f)
+        # logging.info("EEPROM успішно збережено.")
+    except Exception as e:
+        logging.error(f"Помилка запису в EEPROM: {e}")
+
+def load_eeprom():
+    try:
+        with open(EEPROM_FILE, 'r') as f:
+            eeprom = json.load(f)
+        logging.info("EEPROM успішно завантажено.")
+        return eeprom
+    except FileNotFoundError:
+        logging.warning("Файл EEPROM не знайдено, використовуючи значення за замовчуванням.")
+        return None
+    except Exception as e:
+        logging.error(f"Помилка завантаження EEPROM: {e}")
+        return None
+
 class GreenhouseController:
     def __init__(self):
-        # Ініціалізація змінних стану
-        self.eeprom = {
+        # Спроба завантажити EEPROM, або використовувати значення за замовчуванням
+        saved_eeprom = load_eeprom()
+        self.eeprom = saved_eeprom if saved_eeprom is not None else {
             'boy_state': False,
             'temp_u': 0.0,
             'heat_state': False,
@@ -25,6 +51,7 @@ class GreenhouseController:
             'dead_zone': 0.0,
             'valve_mode': False,
         }
+
         self.High = {'OffTime': 0, 'OnTime': 0}
         self.Low = {'OffTime': 0, 'OnTime': 0}
         self.T_out = 0.0
@@ -54,7 +81,6 @@ class GreenhouseController:
             "home/boy_on/current-temperature/get": self.handle_boy_curr_temp,
             "home/heat_on/current-temperature/get": self.handle_bat_curr_temp,
             "home/heat_on/current-temperature_koll": self.handle_heat_curr_temp,
-
         }
 
     def handle_boy_mode_set(self, message):
@@ -63,12 +89,14 @@ class GreenhouseController:
         elif message == "off":
             self.eeprom['boy_state'] = False
         logging.info(f"Режим бойлера встановлено: {self.eeprom['boy_state']}")
+        save_eeprom(self.eeprom)
 
     def handle_boy_temp_set(self, message):
         try:
             temp_boy = float(message)
             self.eeprom['temp_u'] = temp_boy
             logging.info(f"Уставка бойлера: {self.eeprom['temp_u']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури: {message}")
 
@@ -82,12 +110,14 @@ class GreenhouseController:
             self.eeprom['summer'] = True
             self.eeprom['heat_state'] = False
         logging.info(f"Режим опалення встановлено: heat_state={self.eeprom['heat_state']}, summer={self.eeprom['summer']}")
+        save_eeprom(self.eeprom)
 
     def handle_gis_temperature(self, message):
         try:
             temp_gis = float(message)
             self.eeprom['gis_boy'] = temp_gis
             logging.info(f"Температура GIS: {self.eeprom['gis_boy']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури GIS: {message}")
 
@@ -98,6 +128,7 @@ class GreenhouseController:
             self.High['OffTime'] = time_cikl
             self.Low['OffTime'] = time_cikl
             logging.info(f"Час циклу опалення: {self.eeprom['per_off']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення часу циклу: {message}")
 
@@ -108,6 +139,7 @@ class GreenhouseController:
             self.High['OnTime'] = time_imp
             self.Low['OnTime'] = time_imp
             logging.info(f"Час імпульсу опалення: {self.eeprom['per_on']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення часу імпульсу: {message}")
 
@@ -116,6 +148,7 @@ class GreenhouseController:
             temp_off = float(message)
             self.eeprom['temp_off_otop'] = temp_off
             logging.info(f"Температура вимкнення опалення: {self.eeprom['temp_off_otop']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури вимкнення: {message}")
 
@@ -124,6 +157,7 @@ class GreenhouseController:
             temp_min_out = float(message)
             self.eeprom['temp_min_out'] = temp_min_out
             logging.info(f"Мінімальна температура на виході: {self.eeprom['temp_min_out']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення мінімальної температури на виході: {message}")
 
@@ -132,6 +166,7 @@ class GreenhouseController:
             temp_max_out = float(message)
             self.eeprom['temp_max_out'] = temp_max_out
             logging.info(f"Максимальна температура на виході: {self.eeprom['temp_max_out']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення максимальної температури на виході: {message}")
 
@@ -140,6 +175,7 @@ class GreenhouseController:
             temp_max_heat = float(message)
             self.eeprom['temp_max_heat'] = temp_max_heat
             logging.info(f"Максимальна температура опалення: {self.eeprom['temp_max_heat']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення максимальної температури опалення: {message}")
 
@@ -148,6 +184,7 @@ class GreenhouseController:
             kof_p = float(message)
             self.eeprom['kof_p'] = kof_p
             logging.info(f"KOF_P: {self.eeprom['kof_p']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення KOF_P: {message}")
 
@@ -156,6 +193,7 @@ class GreenhouseController:
             kof_i = float(message)
             self.eeprom['kof_i'] = kof_i
             logging.info(f"KOF_I: {self.eeprom['kof_i']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення KOF_I: {message}")
 
@@ -164,6 +202,7 @@ class GreenhouseController:
             kof_d = float(message)
             self.eeprom['kof_d'] = kof_d
             logging.info(f"KOF_D: {self.eeprom['kof_d']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення KOF_D: {message}")
 
@@ -172,6 +211,7 @@ class GreenhouseController:
             dead_zone = float(message)
             self.eeprom['dead_zone'] = dead_zone
             logging.info(f"Dead Zone: {self.eeprom['dead_zone']}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення Dead Zone: {message}")
 
@@ -179,15 +219,19 @@ class GreenhouseController:
         try:
             temp_out = float(message)
             self.T_out = temp_out
+            self.eeprom['T_out'] = temp_out
             logging.info(f"Температура на виході: {self.T_out}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури на виході: {message}")
-    
+
     def handle_boy_curr_temp(self, message):
         try:
             temp_boy = float(message)
             self.T_boy = temp_boy
+            self.eeprom['T_boy'] = temp_boy
             logging.info(f"Температура бойлера: {self.T_boy}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури бойлера: {message}")
 
@@ -195,7 +239,9 @@ class GreenhouseController:
         try:
             temp_bat = float(message)
             self.T_bat = temp_bat
+            self.eeprom['T_bat'] = temp_bat
             logging.info(f"Температура батарей: {self.T_bat}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури батарей: {message}")
     
@@ -203,7 +249,9 @@ class GreenhouseController:
         try:
             temp_heat = float(message)
             self.T_heat = temp_heat
+            self.eeprom['T_heat'] = temp_heat
             logging.info(f"Температура коллектора: {self.T_heat}")
+            save_eeprom(self.eeprom)
         except ValueError:
             logging.error(f"Недійсне значення температури коллектора: {message}")
 
@@ -213,6 +261,7 @@ class GreenhouseController:
         elif message == "off":
             self.eeprom['valve_mode'] = False
         logging.info(f"Режим клапана: {self.eeprom['valve_mode']}")
+        save_eeprom(self.eeprom)
 
     def handle_hand_up(self, message):
         if message == "on":
@@ -220,6 +269,7 @@ class GreenhouseController:
         elif message == "off":
             self.hand_up = False
         logging.info(f"Ручний підйом: {self.hand_up}")
+        save_eeprom(self.eeprom)
 
     def handle_hand_down(self, message):
         if message == "on":
@@ -227,6 +277,7 @@ class GreenhouseController:
         elif message == "off":
             self.hand_down = False
         logging.info(f"Ручне опускання: {self.hand_down}")
+        save_eeprom(self.eeprom)
 
     def handle_message(self, topic, message):
         handler = self.topic_handlers.get(topic)
